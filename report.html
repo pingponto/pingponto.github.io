@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Espelho de ponto — pontual</title>
+<link rel="stylesheet" href="styles.css">
+<meta name="theme-color" content="#111111">
+</head>
+<body>
+<main class="container">
+<h1>Espelho de ponto</h1>
+<div class="row">
+<select id="reportEmp"></select>
+<input id="dateFrom" type="date">
+<input id="dateTo" type="date">
+<button id="btnReport" class="primary">Exibir</button>
+<button id="btnCsv" class="ghost">Exportar CSV</button>
+<a class="ghost" href="index.html">Voltar</a>
+</div>
+<table id="reportTable"></table>
+</main>
+<script src="db.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+window.pontual.mountReport(document);
+});
+</script>
+</body>
+</html>
