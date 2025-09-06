@@ -1,4 +1,4 @@
-var CACHE_NAME = 'pontual-static-v1';
+var CACHE_NAME = 'pingponto-static-v1';
 var ASSETS = [
 './',
 './index.html',

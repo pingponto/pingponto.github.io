@@ -1,5 +1,5 @@
 (function(){
-    var DB_NAME = 'pontualDb';
+    var DB_NAME = 'pingpontoDb';
     var DB_VER = 1;
     function openDb(){
     return new Promise(function(resolve, reject){
@@ -32,7 +32,7 @@
     function hashPin(pin){
     var h = 0; for(var i=0;i<pin.length;i++){ h = ((h<<5)-h) + pin.charCodeAt(i); h|=0; } return String(h);
     }
-    window.pontualDb = {
+    window.pingpontoDb = {
     addEmployee: function(name, pin){ return add('employees',{ name:name, pinHash:hashPin(pin), active:true }); },
     listEmployees: function(){ return all('employees'); },
     removeEmployee: function(id){ return del('employees', id); },

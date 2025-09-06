@@ -1,4 +1,4 @@
-# pontual
+# pingponto
 A minimal **Progressive Web App (PWA)** for time punches on **old/low-end devices**. The goal is to reuse obsolete smartphones or tablets as a dedicated time clock.
 
 ## Features (MVP)

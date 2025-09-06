@@ -1,6 +1,6 @@
 {
-    "name": "pontual",
-    "short_name": "pontual",
+    "name": "pingponto",
+    "short_name": "pingponto",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",

@@ -40,7 +40,7 @@
     }
   
     function reloadEmployees(select) {
-      return window.pontualDb.listEmployees().then(function (list) {
+      return window.pingpontoDb.listEmployees().then(function (list) {
         select.innerHTML = "";
         list
           .filter(function (e) {
@@ -53,7 +53,7 @@
             select.appendChild(o);
           });
         if (!list.length) {
-          return window.pontualDb
+          return window.pingpontoDb
             .addEmployee("Funcionário 1", "111111")
             .then(function () {
               return reloadEmployees(select);
@@ -87,7 +87,7 @@
         b.onclick = function () {
           var type = b.getAttribute("data-type");
           var ts = Date.now();
-          window.pontualDb.addPunch(loginEmp.id, type, ts).then(function () {
+          window.pingpontoDb.addPunch(loginEmp.id, type, ts).then(function () {
             lastPunch.textContent =
               "Último registro: " + type + " em " + fmtTs(ts);
           });
@@ -102,7 +102,7 @@
     function renderEmpTable() {
       var t = $("empTable");
       t.innerHTML = "";
-      window.pontualDb.listEmployees().then(function (list) {
+      window.pingpontoDb.listEmployees().then(function (list) {
         var head = document.createElement("tr");
         ["ID", "Nome", "Ativo", "Ações"].forEach(function (h) {
           var th = document.createElement("th");
@@ -125,7 +125,7 @@
           var btnAct = document.createElement("button");
           btnAct.textContent = e.active ? "Desativar" : "Ativar";
           btnAct.onclick = function () {
-            window.pontualDb
+            window.pingpontoDb
               .setEmployeeActive(e, !e.active)
               .then(renderEmpTable)
               .then(function () {
@@ -136,7 +136,7 @@
           var btnDel = document.createElement("button");
           btnDel.textContent = "Excluir";
           btnDel.onclick = function () {
-            window.pontualDb
+            window.pingpontoDb
               .removeEmployee(e.id)
               .then(renderEmpTable)
               .then(function () {
@@ -175,7 +175,7 @@
         var to = dt.value
           ? new Date(dt.value + "T23:59:59").getTime()
           : Date.now();
-        window.pontualDb
+        window.pingpontoDb
           .listPunchesByEmpAndRange(id, from, to)
           .then(function (rows) {
             tbl.innerHTML = "";
@@ -210,9 +210,9 @@
     }
   
     function ensureManagerPin() {
-      return window.pontualDb.authManager("000000").then(function (ok) {
+      return window.pingpontoDb.authManager("000000").then(function (ok) {
         if (ok) return true;
-        return window.pontualDb.setManagerPin("123456");
+        return window.pingpontoDb.setManagerPin("123456");
       });
     }
   
@@ -226,7 +226,7 @@
         var n = $("newEmpName").value.trim();
         var p = $("newEmpPin").value.trim();
         if (!n || !p) return;
-        window.pontualDb.addEmployee(n, p).then(function () {
+        window.pingpontoDb.addEmployee(n, p).then(function () {
           $("newEmpName").value = "";
           $("newEmpPin").value = "";
           renderEmpTable();
@@ -252,7 +252,7 @@
       $("employeeEnter").onclick = function () {
         var id = parseInt(employeeSelect.value, 10);
         var pin = employeePin.value;
-        window.pontualDb.authEmployee(id, pin).then(function (emp) {
+        window.pingpontoDb.authEmployee(id, pin).then(function (emp) {
           if (emp) {
             mountEmployee(emp);
           } else {
@@ -262,7 +262,7 @@
       };
       $("managerEnter").onclick = function () {
         var pin = managerPin.value;
-        window.pontualDb.authManager(pin).then(function (ok) {
+        window.pingpontoDb.authManager(pin).then(function (ok) {
           if (ok) {
             mountManager();
           } else {
@@ -272,7 +272,7 @@
       };
     }
   
-    window.pontual = {
+    window.pingponto = {
       mountReport: function (doc) {
         reloadEmployees(doc.getElementById("reportEmp")).then(function () {
           doReport(doc);

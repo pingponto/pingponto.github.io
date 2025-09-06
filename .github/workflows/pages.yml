@@ -1,4 +1,4 @@
-name: Deploy pontual to GitHub Pages
+name: Deploy pingponto to GitHub Pages
 
 on:
   push:
