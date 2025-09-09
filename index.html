@@ -1,77 +1,86 @@
 <!doctype html>
-<title>pingponto</title>
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css">
-<meta name="theme-color" content="#111111">
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pingponto</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#111111">
 </head>
 <body>
-<main class="container">
-<h1>pingponto</h1>
+  <main class="container">
+    <h1>pingponto</h1>
 
+    <section id="loginSection" class="card">
+      <h2>Entrar</h2>
+      <div class="tabs">
+        <button id="tabEmployee" class="tab active">Funcionário</button>
+        <button id="tabManager" class="tab">Gestor</button>
+      </div>
 
-<section id="loginSection" class="card">
-<h2>Entrar</h2>
-<div class="tabs">
-<button id="tabEmployee" class="tab active">Funcionário</button>
-<button id="tabManager" class="tab">Gestor</button>
-</div>
-<div id="employeeLogin" class="login-pane">
-<label>Funcionário</label>
-<select id="employeeSelect"></select>
-<label>PIN</label>
-<input id="employeePin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
-<button id="employeeEnter" class="primary">Entrar</button>
-</div>
-<div id="managerLogin" class="login-pane hidden">
-<label>PIN do gestor</label>
-<input id="managerPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
-<button id="managerEnter" class="primary">Entrar</button>
-</div>
-</section>
+      <div id="employeeLogin" class="login-pane">
+        <label>Funcionário</label>
+        <select id="employeeSelect"></select>
+        <label>PIN</label>
+        <input id="employeePin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+        <button id="employeeEnter" class="primary">Entrar</button>
+      </div>
 
+      <div id="managerLogin" class="login-pane hidden">
+        <label>PIN do gestor</label>
+        <input id="managerPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+        <button id="managerEnter" class="primary">Entrar</button>
+      </div>
+    </section>
 
-<section id="employeeSection" class="card hidden">
-<h2 id="empName"></h2>
-<div class="grid">
-<button data-type="IN" class="action">Entrada</button>
-<button data-type="LUNCH_OUT" class="action">Início almoço</button>
-<button data-type="LUNCH_IN" class="action">Fim almoço</button>
-<button data-type="OUT" class="action">Saída</button>
-</div>
-<div id="lastPunch" class="muted"></div>
-<button id="employeeLogout" class="ghost">Sair</button>
-</section>
+    <section id="employeeSection" class="card hidden">
+      <h2 id="empName"></h2>
+      <div class="grid">
+        <button data-type="IN" class="action">Entrada</button>
+        <button data-type="LUNCH_OUT" class="action">Início almoço</button>
+        <button data-type="LUNCH_IN" class="action">Fim almoço</button>
+        <button data-type="OUT" class="action">Saída</button>
+      </div>
+      <div id="lastPunch" class="muted"></div>
+      <button id="employeeLogout" class="ghost">Sair</button>
+    </section>
 
+    <section id="managerSection" class="card hidden">
+      <h2>Painel do gestor</h2>
+      <div class="stack">
+        <details>
+          <summary>Funcionários</summary>
+          <div class="row">
+            <input id="newEmpName" placeholder="Nome">
+            <input id="newEmpPin" placeholder="PIN" type="password" inputmode="numeric" maxlength="6">
+            <button id="addEmp" class="primary">Adicionar</button>
+          </div>
+          <table id="empTable"></table>
+        </details>
+        <details open>
+          <summary>Espelho de ponto</summary>
+          <div class="row">
+            <select id="reportEmp"></select>
+            <input id="dateFrom" type="date">
+            <input id="dateTo" type="date">
+            <button id="btnReport" class="primary">Exibir</button>
+            <button id="btnCsv" class="ghost">Exportar CSV</button>
+            <a id="linkReport" class="ghost" href="report.html">Tela cheia</a>
+          </div>
+          <table id="reportTable"></table>
+        </details>
+      </div>
+      <button id="managerLogout" class="ghost">Sair</button>
+    </section>
+  </main>
 
-<section id="managerSection" class="card hidden">
-<h2>Painel do gestor</h2>
-<div class="stack">
-<details>
-<summary>Funcionários</summary>
-<div class="row">
-<input id="newEmpName" placeholder="Nome">
-<input id="newEmpPin" placeholder="PIN" type="password" inputmode="numeric" maxlength="6">
-<button id="addEmp" class="primary">Adicionar</button>
-</div>
-<table id="empTable"></table>
-</details>
-<details open>
-<summary>Espelho de ponto</summary>
-<div class="row">
-<select id="reportEmp"></select>
-<input id="dateFrom" type="date">
-<input id="dateTo" type="date">
-<button id="btnReport" class="primary">Exibir</button>
-<button id="btnCsv" class="ghost">Exportar CSV</button>
-<a id="linkReport" class="ghost" href="report.html">Tela cheia</a>
-</div>
-<table id="reportTable"></table>
-</details>
-</div>
-<button id="managerLogout" class="ghost">Sair</button>
-</section>
-</main>
-<script src="db.js"></script>
-<script src="app.js"></script>
+  <script src="db.js" defer></script>
+  <script src="app.js" defer></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    }
+  </script>
 </body>
 </html>
