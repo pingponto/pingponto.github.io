@@ -1,7 +1,7 @@
 (function(){
     const DB_NAME = 'pingpontoDb';
     const DB_VER = 1;
-  
+
     function openDb(){
       return new Promise((resolve, reject) => {
         const req = indexedDB.open(DB_NAME, DB_VER);
@@ -24,7 +24,7 @@
         req.onerror = () => reject(req.error);
       });
     }
-  
+
     function storeTx(store, mode){
       return openDb().then(db => db.transaction(store, mode).objectStore(store));
     }
@@ -53,12 +53,12 @@
         const r = s.getAll(); r.onsuccess = () => res(r.result || []); r.onerror = () => rej(r.error);
       }));
     }
-  
+
     function hashPin(pin){
       let h = 0; for(let i=0;i<pin.length;i++){ h = ((h<<5)-h) + pin.charCodeAt(i); h|=0; }
       return String(h);
     }
-  
+
     window.pingpontoDb = {
       addEmployee(name, pin){ return add('employees', { name, pinHash:hashPin(pin), active:true }); },
       listEmployees(){ return getAll('employees'); },

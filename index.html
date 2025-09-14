@@ -6,7 +6,8 @@
   <title>pingponto</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
-  <meta name="theme-color" content="#111111">
+  <meta name="theme-color" content="#FF92C2">
+  <style>.hidden{display:none!important}</style>
 </head>
 <body>
   <main class="container">
@@ -14,20 +15,23 @@
 
     <section id="loginSection" class="card">
       <h2>Entrar</h2>
+
       <div class="tabs">
         <button id="tabEmployee" class="tab active">Funcionário</button>
         <button id="tabManager" class="tab">Gestor</button>
       </div>
 
-      <div id="employeeLogin" class="login-pane">
+      <div id="employeeLogin">
         <label>Funcionário</label>
         <select id="employeeSelect"></select>
+
         <label>PIN</label>
         <input id="employeePin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+
         <button id="employeeEnter" class="primary">Entrar</button>
       </div>
 
-      <div id="managerLogin" class="login-pane hidden">
+      <div id="managerLogin" class="hidden">
         <label>PIN do gestor</label>
         <input id="managerPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
         <button id="managerEnter" class="primary">Entrar</button>
@@ -36,11 +40,8 @@
 
     <section id="employeeSection" class="card hidden">
       <h2 id="empName"></h2>
-      <div class="grid">
-        <button data-type="IN" class="action">Entrada</button>
-        <button data-type="LUNCH_OUT" class="action">Início almoço</button>
-        <button data-type="LUNCH_IN" class="action">Fim almoço</button>
-        <button data-type="OUT" class="action">Saída</button>
+      <div class="grid center">
+        <button id="btnRegistrar" class="primary large">Registrar ponto</button>
       </div>
       <div id="lastPunch" class="muted"></div>
       <button id="employeeLogout" class="ghost">Sair</button>
@@ -48,29 +49,31 @@
 
     <section id="managerSection" class="card hidden">
       <h2>Painel do gestor</h2>
+
       <div class="stack">
         <details>
           <summary>Funcionários</summary>
           <div class="row">
-            <input id="newEmpName" placeholder="Nome">
-            <input id="newEmpPin" placeholder="PIN" type="password" inputmode="numeric" maxlength="6">
+            <input id="newEmpName" placeholder="Nome" autocomplete="off">
+            <input id="newEmpPin" placeholder="PIN" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
             <button id="addEmp" class="primary">Adicionar</button>
           </div>
           <table id="empTable"></table>
         </details>
+
         <details open>
           <summary>Espelho de ponto</summary>
           <div class="row">
             <select id="reportEmp"></select>
-            <input id="dateFrom" type="date">
-            <input id="dateTo" type="date">
+            <input id="reportMonth" type="month">
             <button id="btnReport" class="primary">Exibir</button>
             <button id="btnCsv" class="ghost">Exportar CSV</button>
-            <a id="linkReport" class="ghost" href="report.html">Tela cheia</a>
+            <a class="ghost" href="report.html">Tela cheia</a>
           </div>
           <table id="reportTable"></table>
         </details>
       </div>
+
       <button id="managerLogout" class="ghost">Sair</button>
     </section>
   </main>
