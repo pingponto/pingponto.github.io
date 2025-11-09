@@ -264,8 +264,7 @@
       });
     };
 
-    $("btnReport").onclick = function () { doReport(document); };
-    $("btnCsv").onclick = function () { doReport(document); };
+      doReport(document);
 
     $("managerLogout").onclick = function () {
       show(loginSection);
