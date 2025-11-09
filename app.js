@@ -37,7 +37,7 @@
           select.appendChild(o);
         });
       if (!list.length) {
-        return window.pingpontoDb.addEmployee("Funcionário 1", "111111")
+        return window.pingpontoDb.addEmployee("Adão", "111111")
           .then(function () { return reloadEmployees(select); });
       }
     });
