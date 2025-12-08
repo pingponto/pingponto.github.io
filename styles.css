@@ -224,3 +224,6 @@ td button + button {
     margin-top: 8px;
   }
 }
+.hidden {
+  display: none;
+}

@@ -293,6 +293,40 @@
       });
     };
   }
+  let installPrompt = null;
+const btnInstalar = document.getElementById("btnInstalar");
+
+// O navegador dispara isso quando a PWA é instalável
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault();        // Impede o popup automático
+  installPrompt = event;         // Guarda o evento
+  btnInstalar.classList.remove("hidden");  // Mostra o botão
+});
+
+// Clique do botão para instalar
+btnInstalar.addEventListener("click", async () => {
+  if (!installPrompt) return;
+
+  btnInstalar.classList.add("hidden"); // Esconde o botão após o clique
+  installPrompt.prompt();              // Abre a janela de instalação
+
+  const result = await installPrompt.userChoice;
+
+  if (result.outcome === "accepted") {
+    console.log("Usuário instalou o app");
+  } else {
+    console.log("Usuário fechou a instalação");
+  }
+
+  installPrompt = null; // Só pode ser usado uma vez
+});
+
+// Oculta o botão se o app já estiver instalado
+window.addEventListener("appinstalled", () => {
+  installPrompt = null;
+  btnInstalar.classList.add("hidden");
+});
+
 
   // Exposto para report.html
   window.pingponto = {
