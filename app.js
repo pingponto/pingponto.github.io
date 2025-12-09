@@ -16,20 +16,42 @@
   function hide(el) { el.classList.add("hidden"); }
   function setActive(tab, active) { active ? tab.classList.add("active") : tab.classList.remove("active"); }
 
-  // Utilitários de data/hora
-  function startOfDay(ts){ var d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
-  function endOfDay(ts){ var d=new Date(ts); d.setHours(23,59,59,999); return d.getTime(); }
-  function pad2(n){ return String(n).padStart(2,"0"); }
-  function hhmm(ts){
+  function startOfDay(ts) {
     var d = new Date(ts);
-    return pad2(d.getHours())+":"+pad2(d.getMinutes());
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
   }
 
-  // Recarrega colaboradores nos <select>
+  function endOfDay(ts) {
+    var d = new Date(ts);
+    d.setHours(23, 59, 59, 999);
+    return d.getTime();
+  }
+
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function hhmm(ts) {
+    var d = new Date(ts);
+    return pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  }
+
+  function setCurrentMonthInput(input) {
+    if (!input || input.value) {
+      return;
+    }
+    var d = new Date();
+    var year = d.getFullYear();
+    var month = pad2(d.getMonth() + 1);
+    input.value = year + "-" + month;
+  }
+
   function reloadEmployees(select) {
     return window.pingpontoDb.listEmployees().then(function (list) {
       select.innerHTML = "";
-      list.filter(function (e) { return e.active; })
+      list
+        .filter(function (e) { return e.active; })
         .forEach(function (e) {
           var o = document.createElement("option");
           o.value = e.id;
@@ -43,7 +65,6 @@
     });
   }
 
-  // Abas login Funcionário/Gestor
   function mountTabs() {
     tabEmployee.addEventListener("click", function () {
       setActive(tabEmployee, true);
@@ -59,7 +80,6 @@
     });
   }
 
-  // Tela do funcionário
   function mountEmployee(loginEmp) {
     hide(loginSection);
     hide(managerSection);
@@ -71,9 +91,6 @@
     if (btn) {
       btn.onclick = function () {
         var ts = Date.now();
-        // Armazena um clique simples (sem etapas/tipos visíveis)
-        // Mantemos o campo "type" como "CLICK" apenas para compatibilidade interna,
-        // mas o relatório não usa esse campo para nada.
         window.pingpontoDb.addPunch(loginEmp.id, "CLICK", ts).then(function () {
           lastPunch.textContent = "Ponto registrado às " + hhmm(ts);
         });
@@ -86,7 +103,6 @@
     };
   }
 
-  // Tabela de colaboradores no painel do gestor
   function renderEmpTable() {
     var t = $("empTable");
     t.innerHTML = "";
@@ -102,9 +118,17 @@
       list.forEach(function (e) {
         var tr = document.createElement("tr");
 
-        var td1 = document.createElement("td"); td1.textContent = e.id; tr.appendChild(td1);
-        var td2 = document.createElement("td"); td2.textContent = e.name; tr.appendChild(td2);
-        var td3 = document.createElement("td"); td3.textContent = e.active ? "Sim" : "Não"; tr.appendChild(td3);
+        var td1 = document.createElement("td");
+        td1.textContent = e.id;
+        tr.appendChild(td1);
+
+        var td2 = document.createElement("td");
+        td2.textContent = e.name;
+        tr.appendChild(td2);
+
+        var td3 = document.createElement("td");
+        td3.textContent = e.active ? "Sim" : "Não";
+        tr.appendChild(td3);
 
         var td4 = document.createElement("td");
         var btnAct = document.createElement("button");
@@ -136,12 +160,6 @@
     });
   }
 
-  // Relatório mensal deduzido por cliques
-  // Regras:
-  // - 2 cliques (entrada/intervalo) => total = t2 - t1 (OK)
-  // - 4 cliques (volta/saída) => total = (t2 - t1) + (t4 - t3) (OK)
-  // - nº ímpar de cliques => "Irregular" (soma apenas pares completos)
-  // - >4 cliques => "Inconsistente" (soma pares completos, mas marca inconsistente)
   function doReport(doc) {
     var empSel = doc.getElementById("reportEmp");
     var month = doc.getElementById("reportMonth");
@@ -149,16 +167,22 @@
     var btn = doc.getElementById("btnReport");
     var csv = doc.getElementById("btnCsv");
 
+    setCurrentMonthInput(month);
+
     function monthRange(ym) {
       if (!ym || !ym.value) return null;
       var parts = ym.value.split("-");
-      var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1;
+      var y = parseInt(parts[0], 10);
+      var m = parseInt(parts[1], 10) - 1;
       var from = new Date(y, m, 1, 0, 0, 0, 0).getTime();
       var to = new Date(y, m + 1, 0, 23, 59, 59, 999).getTime();
       return { from: from, to: to };
     }
 
-    function minutes(ms) { return Math.floor(ms / 60000); }
+    function minutes(ms) {
+      return Math.floor(ms / 60000);
+    }
+
     function hhmmFromMinutes(min) {
       var h = Math.floor(min / 60);
       var m = min % 60;
@@ -167,12 +191,16 @@
 
     function groupByDay(list) {
       var map = {};
-      list.forEach(function(p){
+      list.forEach(function (p) {
         var dayKey = startOfDay(p.ts);
-        (map[dayKey] = map[dayKey] || []).push(p.ts);
+        if (!map[dayKey]) {
+          map[dayKey] = [];
+        }
+        map[dayKey].push(p.ts);
       });
-      // Ordena timestamps em cada dia
-      Object.keys(map).forEach(function(k){ map[k].sort(function(a,b){return a-b;}); });
+      Object.keys(map).forEach(function (k) {
+        map[k].sort(function (a, b) { return a - b; });
+      });
       return map;
     }
 
@@ -198,19 +226,21 @@
       }
       window.pingpontoDb.listPunchesByEmpAndRange(empId, r.from, r.to).then(function (list) {
         var byDay = groupByDay(list);
-        var dayKeys = Object.keys(byDay).map(function(k){return parseInt(k,10);}).sort(function(a,b){return a-b;});
+        var dayKeys = Object.keys(byDay)
+          .map(function (k) { return parseInt(k, 10); })
+          .sort(function (a, b) { return a - b; });
 
         var rows = ["<tr><th>Data</th><th>Horários</th><th>Total trabalhado</th><th>Status</th></tr>"];
         var csvLines = ["data;horarios;total_trabalhado;status"];
 
-        dayKeys.forEach(function(dayKey){
+        dayKeys.forEach(function (dayKey) {
           var clicks = byDay[dayKey];
           var d = new Date(dayKey);
-          var dataStr = d.toLocaleDateString('pt-BR');
+          var dataStr = d.toLocaleDateString("pt-BR");
           var horarios = clicks.map(hhmm).join("  •  ");
           var comp = computeDay(clicks);
           var totalStr = hhmmFromMinutes(comp.totalMin);
-          rows.push("<tr><td>"+dataStr+"</td><td>"+horarios+"</td><td>"+totalStr+"</td><td>"+comp.status+"</td></tr>");
+          rows.push("<tr><td>" + dataStr + "</td><td>" + horarios + "</td><td>" + totalStr + "</td><td>" + comp.status + "</td></tr>");
           csvLines.push([dataStr, horarios, totalStr, comp.status].join(";"));
         });
 
@@ -220,20 +250,24 @@
 
         tbl.innerHTML = rows.join("");
 
-        csv.onclick = function(){
-          var blob = new Blob([csvLines.join("\n")], {type:"text/csv;charset=utf-8;"});
+        csv.onclick = function () {
+          var blob = new Blob([csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
           var url = URL.createObjectURL(blob);
           var a = doc.createElement("a");
-          a.href = url; a.download = "relatorio.csv";
-          a.click(); URL.revokeObjectURL(url);
+          a.href = url;
+          a.download = "relatorio.csv";
+          a.click();
+          URL.revokeObjectURL(url);
         };
       });
     }
 
     btn.onclick = render;
-    month.onchange = function(){};
-    window.pingpontoDb.listEmployees().then(function(list){
-      empSel.innerHTML = list.map(function(e){ return "<option value='"+e.id+"'>"+e.name+"</option>"; }).join("");
+    month.onchange = function () {};
+    window.pingpontoDb.listEmployees().then(function (list) {
+      empSel.innerHTML = list
+        .map(function (e) { return "<option value='" + e.id + "'>" + e.name + "</option>"; })
+        .join("");
     });
   }
 
@@ -264,7 +298,7 @@
       });
     };
 
-      doReport(document);
+    doReport(document);
 
     $("managerLogout").onclick = function () {
       show(loginSection);
@@ -280,34 +314,33 @@
       var id = parseInt(employeeSelect.value, 10);
       var pin = employeePin.value;
       window.pingpontoDb.authEmployee(id, pin).then(function (emp) {
-        if (emp) { mountEmployee(emp); }
-        else { alert("PIN inválido"); }
+        if (emp) {
+          mountEmployee(emp);
+        } else {
+          alert("PIN inválido");
+        }
       });
     };
 
     $("managerEnter").onclick = function () {
       var pin = managerPin.value;
       window.pingpontoDb.authManager(pin).then(function (ok) {
-        if (ok) { mountManager(); }
-        else { alert("PIN do gestor inválido"); }
+        if (ok) {
+          mountManager();
+        } else {
+          alert("PIN do gestor inválido");
+        }
       });
     };
   }
-  
 
-  // Exposto para report.html
   window.pingponto = {
     mountReport: function (doc) {
-      reloadEmployees(doc.getElementById("reportEmp")).then(function () {
-        // Apenas garante que o <select> tenha opções
-      });
-      // O doReport no report.html chama a própria função do app ao clicar
-      // mas deixamos essa API para compatibilidade.
-    },
-    // Para reaproveitar as funções se necessário no report.html no futuro:
-    // nada adicional aqui por enquanto
+      reloadEmployees(doc.getElementById("reportEmp")).then(function () {});
+    }
   };
-    var installBtn = document.getElementById("installBtn");
+
+  var installBtn = document.getElementById("installBtn");
   var deferredPrompt = null;
 
   window.addEventListener("beforeinstallprompt", function (e) {
@@ -343,5 +376,6 @@
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js");
   }
+
   ensureManagerPin().then(mountLogin);
 })();
