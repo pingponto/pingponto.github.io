@@ -1,12 +1,13 @@
 (function(){
     const DB_NAME = 'pingpontoDb';
-    const DB_VER = 1;
+    const DB_VER = 2;
 
     function openDb(){
       return new Promise((resolve, reject) => {
         const req = indexedDB.open(DB_NAME, DB_VER);
         req.onupgradeneeded = e => {
           const db = e.target.result;
+
           if(!db.objectStoreNames.contains('employees')){
             const s = db.createObjectStore('employees', { keyPath:'id', autoIncrement:true });
             s.createIndex('by_name','name',{unique:false});
@@ -19,8 +20,17 @@
           if(!db.objectStoreNames.contains('meta')){
             db.createObjectStore('meta', { keyPath:'key' });
           }
+
+          if(!db.objectStoreNames.contains('managers')){
+            const m = db.createObjectStore('managers', { keyPath:'id', autoIncrement:true });
+            m.createIndex('by_name','name',{unique:false});
+          }
         };
-        req.onsuccess = e => resolve(e.target.result);
+
+        req.onsuccess = e => {
+          const db = e.target.result;
+          ensureDefaultManager(db).then(() => resolve(db)).catch(reject);
+        };
         req.onerror = () => reject(req.error);
       });
     }
@@ -59,6 +69,62 @@
       return String(h);
     }
 
+    function tx(db, stores, mode){
+      return db.transaction(stores, mode);
+    }
+
+    function getFromStore(store, key){
+      return new Promise((res, rej) => {
+        const r = store.get(key);
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+    }
+
+    function getAllFromStore(store){
+      return new Promise((res, rej) => {
+        const r = store.getAll();
+        r.onsuccess = () => res(r.result || []);
+        r.onerror = () => rej(r.error);
+      });
+    }
+
+    function addToStore(store, value){
+      return new Promise((res, rej) => {
+        const r = store.add(value);
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+    }
+
+    function putToStore(store, value){
+      return new Promise((res, rej) => {
+        const r = store.put(value);
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+    }
+
+    function ensureDefaultManager(db){
+      if(!db.objectStoreNames.contains('managers')){
+        return Promise.resolve();
+      }
+      const t = tx(db, ['managers','meta'], 'readwrite');
+      const managers = t.objectStore('managers');
+      const meta = t.objectStore('meta');
+
+      return getAllFromStore(managers).then(list => {
+        if(list.length){
+          return true;
+        }
+        return getFromStore(meta, 'managerPin').then(v => {
+          const legacyHash = v ? v.value : null;
+          const pinHash = legacyHash || hashPin('123456');
+          return addToStore(managers, { name: 'Gestor', pinHash, active: true });
+        });
+      });
+    }
+
     window.pingpontoDb = {
       addEmployee(name, pin){ return add('employees', { name, pinHash:hashPin(pin), active:true }); },
       listEmployees(){ return getAll('employees'); },
@@ -70,13 +136,25 @@
           return hashPin(pin) === emp.pinHash ? emp : null;
         });
       },
-      authManager(pin){
-        return get('meta', 'managerPin').then(v => {
-          const hv = v ? v.value : '0';
-          return hashPin(pin) === hv;
+
+      addManager(name, pin){ return add('managers', { name, pinHash:hashPin(pin), active:true }); },
+      listManagers(){ return getAll('managers'); },
+      removeManager(id){ return del('managers', id); },
+      setManagerActive(mgr, active){ mgr.active = active; return put('managers', mgr); },
+      setManagerPin(managerId, pin){
+        return get('managers', managerId).then(mgr => {
+          if(!mgr) return false;
+          mgr.pinHash = hashPin(pin);
+          return put('managers', mgr).then(() => true);
         });
       },
-      setManagerPin(pin){ return put('meta', { key: 'managerPin', value: hashPin(pin) }); },
+      authManager(managerId, pin){
+        return get('managers', managerId).then(mgr => {
+          if(!mgr || !mgr.active) return null;
+          return hashPin(pin) === mgr.pinHash ? mgr : null;
+        });
+      },
+
       addPunch(employeeId, type, ts){ return add('punches', { employeeId, type, ts }); },
       listPunchesByEmpAndRange(employeeId, from, to){
         return storeTx('punches', 'readonly').then(s => new Promise((res, rej) => {

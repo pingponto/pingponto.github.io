@@ -6,6 +6,7 @@
   var managerSection = $("managerSection");
   var employeeSelect = $("employeeSelect");
   var employeePin = $("employeePin");
+  var managerSelect = $("managerSelect");
   var managerPin = $("managerPin");
   var empName = $("empName");
   var lastPunch = $("lastPunch");
@@ -45,12 +46,9 @@
     var from = startOfDay(ts);
     var to = endOfDay(ts);
     var key = minuteKey(ts);
-    return window.pingpontoDb.listPunchesByEmpAndRange(employeeId, from, to)
-      .then(function (list) {
-        return list.some(function (p) {
-          return minuteKey(p.ts) === key;
-        });
-      });
+    return window.pingpontoDb.listPunchesByEmpAndRange(employeeId, from, to).then(function (list) {
+      return list.some(function (p) { return minuteKey(p.ts) === key; });
+    });
   }
 
   function setCurrentMonthInput(input) {
@@ -78,6 +76,20 @@
         return window.pingpontoDb.addEmployee("Adão", "111111")
           .then(function () { return reloadEmployees(select); });
       }
+    });
+  }
+
+  function reloadManagers(select) {
+    return window.pingpontoDb.listManagers().then(function (list) {
+      select.innerHTML = "";
+      list
+        .filter(function (m) { return m.active; })
+        .forEach(function (m) {
+          var o = document.createElement("option");
+          o.value = m.id;
+          o.textContent = m.name;
+          select.appendChild(o);
+        });
     });
   }
 
@@ -293,19 +305,73 @@
     });
   }
 
-  function ensureManagerPin() {
-    return window.pingpontoDb.authManager("000000").then(function (ok) {
-      if (ok) return true;
-      return window.pingpontoDb.setManagerPin("123456");
+  function renderManagerTable(currentManagerId) {
+    var t = $("managerTable");
+    if (!t) return;
+    t.innerHTML = "";
+    window.pingpontoDb.listManagers().then(function (list) {
+      var head = document.createElement("tr");
+      ["ID", "Nome", "Ativo", "Ações"].forEach(function (h) {
+        var th = document.createElement("th");
+        th.textContent = h;
+        head.appendChild(th);
+      });
+      t.appendChild(head);
+
+      list.forEach(function (m) {
+        var tr = document.createElement("tr");
+
+        var td1 = document.createElement("td");
+        td1.textContent = m.id;
+        tr.appendChild(td1);
+
+        var td2 = document.createElement("td");
+        td2.textContent = m.name;
+        tr.appendChild(td2);
+
+        var td3 = document.createElement("td");
+        td3.textContent = m.active ? "Sim" : "Não";
+        tr.appendChild(td3);
+
+        var td4 = document.createElement("td");
+        var btnAct = document.createElement("button");
+        btnAct.textContent = m.active ? "Desativar" : "Ativar";
+        btnAct.disabled = m.id === currentManagerId;
+        btnAct.onclick = function () {
+          window.pingpontoDb.setManagerActive(m, !m.active).then(function () {
+            renderManagerTable(currentManagerId);
+            reloadManagers(managerSelect);
+          });
+        };
+        var btnDel = document.createElement("button");
+        btnDel.textContent = "Excluir";
+        btnDel.disabled = m.id === currentManagerId;
+        btnDel.onclick = function () {
+          window.pingpontoDb.removeManager(m.id).then(function () {
+            renderManagerTable(currentManagerId);
+            reloadManagers(managerSelect);
+          });
+        };
+        td4.appendChild(btnAct);
+        td4.appendChild(btnDel);
+        tr.appendChild(td4);
+        t.appendChild(tr);
+      });
     });
   }
 
-  function mountManager() {
+  function mountManager(loginMgr) {
     hide(loginSection);
     hide(employeeSection);
     show(managerSection);
+    if ($("managerTitle")) {
+      $("managerTitle").textContent = "Painel do gestor: " + loginMgr.name;
+    }
     renderEmpTable();
     reloadEmployees($("reportEmp"));
+
+    reloadManagers(managerSelect);
+    renderManagerTable(loginMgr.id);
 
     $("addEmp").onclick = function () {
       var n = $("newEmpName").value.trim();
@@ -320,6 +386,46 @@
       });
     };
 
+    var addManagerBtn = $("addManager");
+    if (addManagerBtn) {
+      addManagerBtn.onclick = function () {
+        var n = $("newManagerName").value.trim();
+        var p = $("newManagerPin").value.trim();
+        if (!n || !p) return;
+        window.pingpontoDb.addManager(n, p).then(function () {
+          $("newManagerName").value = "";
+          $("newManagerPin").value = "";
+          renderManagerTable(loginMgr.id);
+          reloadManagers(managerSelect);
+        });
+      };
+    }
+
+    var changePinBtn = $("btnChangeManagerPin");
+    if (changePinBtn) {
+      changePinBtn.onclick = function () {
+        var p1 = $("changeManagerPin").value.trim();
+        var p2 = $("changeManagerPinConfirm").value.trim();
+        if (!p1 || !p2) {
+          alert("Informe e confirme o novo PIN.");
+          return;
+        }
+        if (p1 !== p2) {
+          alert("Os PINs não conferem.");
+          return;
+        }
+        window.pingpontoDb.setManagerPin(loginMgr.id, p1).then(function (ok) {
+          if (ok) {
+            $("changeManagerPin").value = "";
+            $("changeManagerPinConfirm").value = "";
+            alert("PIN alterado com sucesso.");
+          } else {
+            alert("Não foi possível alterar o PIN.");
+          }
+        });
+      };
+    }
+
     doReport(document);
 
     $("managerLogout").onclick = function () {
@@ -331,6 +437,7 @@
   function mountLogin() {
     mountTabs();
     reloadEmployees(employeeSelect);
+    reloadManagers(managerSelect);
 
     $("employeeEnter").onclick = function () {
       var id = parseInt(employeeSelect.value, 10);
@@ -345,10 +452,15 @@
     };
 
     $("managerEnter").onclick = function () {
+      var id = parseInt(managerSelect.value, 10);
       var pin = managerPin.value;
-      window.pingpontoDb.authManager(pin).then(function (ok) {
-        if (ok) {
-          mountManager();
+      if (!id || !pin) {
+        alert("Selecione o gestor e informe o PIN.");
+        return;
+      }
+      window.pingpontoDb.authManager(id, pin).then(function (mgr) {
+        if (mgr) {
+          mountManager(mgr);
         } else {
           alert("PIN do gestor inválido");
         }
@@ -399,5 +511,5 @@
     navigator.serviceWorker.register("sw.js");
   }
 
-  ensureManagerPin().then(mountLogin);
+  mountLogin();
 })();

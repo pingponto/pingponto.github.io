@@ -35,6 +35,9 @@
       </div>
 
       <div id="managerLogin" class="hidden">
+        <label>Gestor</label>
+        <select id="managerSelect"></select>
+
         <label>PIN do gestor</label>
         <input id="managerPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
         <button id="managerEnter" class="primary">Entrar</button>
@@ -51,7 +54,7 @@
     </section>
 
     <section id="managerSection" class="card hidden">
-      <h2>Painel do gestor</h2>
+      <h2 id="managerTitle">Painel do gestor</h2>
 
       <div class="stack">
         <details>
@@ -62,6 +65,23 @@
             <button id="addEmp" class="primary">Adicionar</button>
           </div>
           <table id="empTable"></table>
+        </details>
+
+        <details>
+          <summary>Gestores</summary>
+          <div class="row">
+            <input id="newManagerName" placeholder="Nome" autocomplete="off">
+            <input id="newManagerPin" placeholder="PIN" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+            <button id="addManager" class="primary">Adicionar</button>
+          </div>
+
+          <div class="row">
+            <input id="changeManagerPin" placeholder="Novo PIN" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+            <input id="changeManagerPinConfirm" placeholder="Confirmar PIN" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+            <button id="btnChangeManagerPin" class="ghost">Alterar meu PIN</button>
+          </div>
+
+          <table id="managerTable"></table>
         </details>
 
         <details open>
