@@ -93,6 +93,25 @@
     });
   }
 
+  function reloadManagersForPinSelect(select, currentManagerId) {
+    return window.pingpontoDb.listManagers().then(function (list) {
+      var active = list.filter(function (m) { return m.active; });
+      select.innerHTML = "";
+
+      active.forEach(function (m) {
+        var o = document.createElement("option");
+        o.value = m.id;
+        o.textContent = m.name;
+        select.appendChild(o);
+      });
+
+      if (active.length) {
+        var exists = active.some(function (m) { return String(m.id) === String(currentManagerId); });
+        select.value = exists ? String(currentManagerId) : String(active[0].id);
+      }
+    });
+  }
+
   function mountTabs() {
     tabEmployee.addEventListener("click", function () {
       setActive(tabEmployee, true);
@@ -341,6 +360,7 @@
           window.pingpontoDb.setManagerActive(m, !m.active).then(function () {
             renderManagerTable(currentManagerId);
             reloadManagers(managerSelect);
+            reloadManagersForPinSelect($("managerPinSelect"), currentManagerId);
           });
         };
         var btnDel = document.createElement("button");
@@ -350,6 +370,7 @@
           window.pingpontoDb.removeManager(m.id).then(function () {
             renderManagerTable(currentManagerId);
             reloadManagers(managerSelect);
+            reloadManagersForPinSelect($("managerPinSelect"), currentManagerId);
           });
         };
         td4.appendChild(btnAct);
@@ -364,14 +385,17 @@
     hide(loginSection);
     hide(employeeSection);
     show(managerSection);
+
     if ($("managerTitle")) {
       $("managerTitle").textContent = "Painel do gestor: " + loginMgr.name;
     }
+
     renderEmpTable();
     reloadEmployees($("reportEmp"));
 
     reloadManagers(managerSelect);
     renderManagerTable(loginMgr.id);
+    reloadManagersForPinSelect($("managerPinSelect"), loginMgr.id);
 
     $("addEmp").onclick = function () {
       var n = $("newEmpName").value.trim();
@@ -397,6 +421,7 @@
           $("newManagerPin").value = "";
           renderManagerTable(loginMgr.id);
           reloadManagers(managerSelect);
+          reloadManagersForPinSelect($("managerPinSelect"), loginMgr.id);
         });
       };
     }
@@ -404,8 +429,16 @@
     var changePinBtn = $("btnChangeManagerPin");
     if (changePinBtn) {
       changePinBtn.onclick = function () {
+        var targetSelect = $("managerPinSelect");
+        var targetId = parseInt(targetSelect.value, 10);
+
         var p1 = $("changeManagerPin").value.trim();
         var p2 = $("changeManagerPinConfirm").value.trim();
+
+        if (!targetId) {
+          alert("Selecione o gestor que terá o PIN alterado.");
+          return;
+        }
         if (!p1 || !p2) {
           alert("Informe e confirme o novo PIN.");
           return;
@@ -414,11 +447,14 @@
           alert("Os PINs não conferem.");
           return;
         }
-        window.pingpontoDb.setManagerPin(loginMgr.id, p1).then(function (ok) {
+
+        window.pingpontoDb.setManagerPin(targetId, p1).then(function (ok) {
           if (ok) {
             $("changeManagerPin").value = "";
             $("changeManagerPinConfirm").value = "";
             alert("PIN alterado com sucesso.");
+            reloadManagers(managerSelect);
+            reloadManagersForPinSelect($("managerPinSelect"), loginMgr.id);
           } else {
             alert("Não foi possível alterar o PIN.");
           }
