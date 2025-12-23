@@ -37,6 +37,22 @@
     return pad2(d.getHours()) + ":" + pad2(d.getMinutes());
   }
 
+  function minuteKey(ts) {
+    return Math.floor(ts / 60000);
+  }
+
+  function isDuplicatePunch(employeeId, ts) {
+    var from = startOfDay(ts);
+    var to = endOfDay(ts);
+    var key = minuteKey(ts);
+    return window.pingpontoDb.listPunchesByEmpAndRange(employeeId, from, to)
+      .then(function (list) {
+        return list.some(function (p) {
+          return minuteKey(p.ts) === key;
+        });
+      });
+  }
+
   function setCurrentMonthInput(input) {
     if (!input || input.value) {
       return;
@@ -91,8 +107,14 @@
     if (btn) {
       btn.onclick = function () {
         var ts = Date.now();
-        window.pingpontoDb.addPunch(loginEmp.id, "CLICK", ts).then(function () {
-          lastPunch.textContent = "Ponto registrado às " + hhmm(ts);
+        isDuplicatePunch(loginEmp.id, ts).then(function (dup) {
+          if (dup) {
+            alert("Ponto duplicado: já existe um registro neste mesmo minuto.");
+            return;
+          }
+          window.pingpontoDb.addPunch(loginEmp.id, "CLICK", ts).then(function () {
+            lastPunch.textContent = "Ponto registrado às " + hhmm(ts);
+          });
         });
       };
     }
